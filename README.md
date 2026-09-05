@@ -3,8 +3,9 @@
 React로 구현한 학습 기록 SPA입니다. 학습 내용을 기록하고 주제·상태로 검색하며, 수정과 삭제까지 하나의 데이터 흐름으로 연결합니다. 핵심 데이터는 Supabase 원격 데이터베이스에서만 CRUD합니다. 목 데이터나 localStorage를 CRUD 저장소로 사용하는 대체 모드는 없습니다.
 
 - 소스 저장소: https://github.com/dooolll00/B1-2
-- 제출용 배포 URL: **미배포 — Supabase 설정과 배포 후 실제 URL을 이곳에 기입하세요.**
-- 현재 원격 연결 검증: **통과 — 익명 로그인, 목록·상세 조회, 등록·수정·삭제 및 삭제 후 재조회 확인. 검증용 기록은 삭제했습니다. 배포 환경 검증은 아직 미실시입니다.**
+- 제출용 배포 URL: https://b1-2-steel.vercel.app
+- 원격 연결 및 배포 검증: **통과 — 실제 배포 사이트를 Chrome으로 열어 익명 로그인, 등록·목록·상세·수정·삭제, 상세 새로고침, 폼 검증·미리보기, 검색·초기화, 삭제 취소, 404, 네트워크 오류·재시도를 확인했습니다. 검증용 기록은 삭제했습니다.**
+- 화면 검증: 데스크톱·모바일 화면 확인, 390px 너비에서 가로 넘침 없음, 검증 중 미처리 브라우저 오류 없음.
 
 ## 실행 방법
 
@@ -59,15 +60,15 @@ React 19, React Router 7, JavaScript, Vite 6, Supabase JS 2 / PostgreSQL / Anony
 
 ## 라우트
 
-| 경로 | 화면 |
-| --- | --- |
-| `/` | 원격 기록 통계와 최근 기록 대시보드 |
-| `/items` | 목록, 제목·내용 검색, 주제·상태 필터 |
-| `/items/new` | 등록 폼 및 실시간 미리보기 |
-| `/items/:id` | 상세 조회, 삭제 확인 |
-| `/items/:id/edit` | 원격 데이터로 초기화한 수정 폼 |
-| `/guide` | 이용·연결 안내 |
-| `*` | Not Found |
+| 경로              | 화면                                 |
+| ----------------- | ------------------------------------ |
+| `/`               | 원격 기록 통계와 최근 기록 대시보드  |
+| `/items`          | 목록, 제목·내용 검색, 주제·상태 필터 |
+| `/items/new`      | 등록 폼 및 실시간 미리보기           |
+| `/items/:id`      | 상세 조회, 삭제 확인                 |
+| `/items/:id/edit` | 원격 데이터로 초기화한 수정 폼       |
+| `/guide`          | 이용·연결 안내                       |
+| `*`               | Not Found                            |
 
 ## 코드 구조와 React 설명
 
@@ -81,7 +82,7 @@ src/
 supabase/      SQL 스키마와 사용자별 접근 정책
 ```
 
-**컴포넌트 기준:** 페이지는 라우트 파라미터와 이동을 결정하고, UI는 props로 받은 데이터와 콜백을 표시합니다. Button, Card, Badge, PageHeader, Loading, ErrorState, EmptyState, Field, StatCard, RecordCard, RecordList, RecordForm 등 12개 컴포넌트가 props로 표시·동작을 바꿉니다. 등록과 수정은 같은 RecordForm을 사용합니다.
+**컴포넌트 기준:** 페이지는 라우트 파라미터와 이동을 결정하고, UI는 props로 받은 데이터와 콜백을 표시합니다. Button, Card, Badge, PageHeader, Loading, ErrorState, EmptyState, Field, StatCard, RecordCard, RecordList, RecordForm 등 12개 컴포넌트가 props로 표시·동작을 바꿉니다. 등록과 수정은 같은 RecordForm을 사용합니다. RecordForm은 입력·검증·제출 상태를 담당하고 onSubmit 콜백을 호출합니다. Editor 페이지는 원격 저장·성공 알림·화면 이동을 담당합니다. 저장 실패는 폼으로 전달되어 입력을 유지한 채 오류를 표시합니다.
 
 **props와 state:** props는 부모에서 내려온 입력값입니다. RecordForm의 initial과 RecordCard의 record가 예입니다. state는 이벤트에 따라 바뀌는 컴포넌트의 기억입니다. 폼 값·오류·제출 상태는 RecordForm, 검색·필터는 Items, 조회 결과·로딩·오류는 커스텀 훅, 여러 페이지에서 쓰는 알림은 ToastProvider Context에 둡니다. 원격 데이터의 원본은 Supabase에 있습니다.
 
@@ -118,3 +119,7 @@ supabase/      SQL 스키마와 사용자별 접근 정책
 - [Supabase 익명 로그인과 사용자 역할](https://supabase.com/docs/guides/auth/auth-anonymous)
 - [Vite의 Vercel 배포](https://vercel.com/docs/frameworks/frontend/vite)
 - [Vercel 환경변수 변경과 재배포](https://vercel.com/docs/environment-variables/managing-environment-variables)
+
+## 코드 형식 유지
+
+`npm run format`으로 JSX·CSS·문서를 정렬하고, `npm run format:check`로 검사합니다. GitHub CI에서도 형식 검사·자동 테스트·빌드를 실행합니다.
