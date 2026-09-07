@@ -139,3 +139,28 @@
 - `npm run format:check`, `git diff --check` 통과. 코드 변경이 없으므로 앞서 통과한 테스트 23개와 빌드는 반복하지 않았다.
 - 이 결과 기록은 `docs: record successful GitHub publication` 후속 커밋으로 함께 반영한다.
 - 남은 사항: 자동 재배포 성공 여부는 이번 push 작업에서 검증하지 않았다.
+
+## 2026-09-07 19:15 KST — push 후 자동 배포 확인
+
+- 요청: 변경 반영 후 Vercel 재배포 여부를 확인해야 하는지 질문. 제출 준비를 위해 실제 상태 확인까지 수행.
+- 수정 파일: `WORK_LOG.md`에 확인 결과만 추가.
+- 확인 대상: main 커밋 `1ccb319e538e86cadea8abe8d128b0df7f6da48b`.
+- GitHub 커밋 상태: Vercel `success`, 배포 URL https://vercel.com/dooolll00/b1-2/Dh5dbq8epWKAJKRircqTKjKmHXQg .
+- GitHub Actions: `React checks` completed/success, https://github.com/dooolll00/B1-2/actions/runs/34110436898 .
+- 실제 공개 URL을 Chromium으로 확인: `/items/new`, `/guide`, 임의 404 경로 모두 HTTP 200 및 예상 화면 표시. SPA의 404 안내는 앱 화면 기준이며 HTTP 404 응답을 의미하지 않음.
+- 브라우저 미처리 오류 0개. 새 계정/학습 기록 생성 없이 공개 페이지 점검만 수행. 원격 CRUD는 앞선 검증 결과 참고.
+- 해결되지 않은 배포 문제 없음. 다음 작업은 발표 가이드에 따라 시연 연습.
+- 이번 확인 기록은 로컬에만 추가했으며 추가 commit/push는 수행하지 않음.
+
+## 2026-09-07 20:26 KST — B1-1 디자인·폰트 적용
+
+- 요청: B1-1처럼 디자인과 폰트를 변경하되 미션 요구사항에 영향이 없는지 검토 후 적용.
+- 변경 파일: `src/styles.css`, `src/components/ThemeToggle.jsx` 추가, `src/components/Layout.jsx`, `index.html`, `README.md`, `PRESENTATION_GUIDE.md`, `WORK_LOG.md`.
+- B1-1의 WORK_LOG 및 CSS를 참고만 했으며 해당 프로젝트 파일은 수정하지 않았다. 기존 B1-2 작업 기록 미커밋 변경도 보존했다.
+- 핵심 작업: Pretendard CDN/시스템 폰트 fallback, 블루·회색 라이트/네이비·퍼플 다크 테마, 카드 10px 모서리와 그림자, 반응형 헤더 전환 버튼 적용. 다크 포인트·보조 글자는 대비를 위해 밝게 조정.
+- 테마는 React state/effect로 관리. 사용자가 선택하기 전에는 시스템 테마를 따르며 선택 후 `today-learning-theme`만 localStorage에 저장한다. 저장소 오류는 처리하여 UI 이용을 유지한다.
+- 미션 검토: CSS 자유 선택 범위이며 React 라우트·공통 컴포넌트·원격 CRUD·폼 검증·비동기 상태 구조는 유지한다. 로딩·오류·빈 상태·입력 오류·포커스·비활성 표시에도 테마 적용.
+- 테스트: `npm test` 23개 통과, `npm run build` 통과. 임시 Node 22.14.0 환경 사용.
+- 브라우저: localhost:5174와 `/tmp/b1-2-browser/design.cjs` 사용. 원격 API 대신 브라우저 모듈 응답 fixture로 화면 데이터 구성. 라이트/다크 각각 7경로 × 320/390/768/1440px에서 가로 넘침 없음. Pretendard 로딩, 테마 새로고침 유지, 모의 CRUD/폼 검증, CDN 및 localStorage 차단 fallback 통과. 미처리 JS 오류 0.
+- 화면: `/tmp/b1-2-light.png`, `/tmp/b1-2-dark.png`, `/tmp/b1-2-mobile.png` 캡처를 열어 확인. 실제 원격 데이터·인증 설정은 변경하지 않음.
+- 남은 사항/다음 작업: 디자인은 로컬에만 적용. 이번 변경의 commit/push/배포는 수행하지 않았다. 배포 시 공개본의 폰트·테마·주요 경로를 확인한다.

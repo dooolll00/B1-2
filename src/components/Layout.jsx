@@ -1,5 +1,6 @@
 import { NavLink, Outlet, Link, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
+import ThemeToggle from './ThemeToggle';
 export default function Layout() {
   const { pathname } = useLocation();
   useEffect(() => {
@@ -22,9 +23,12 @@ export default function Layout() {
           <NavLink to="/items">학습 기록</NavLink>
           <NavLink to="/guide">이용 안내</NavLink>
         </nav>
-        <Link to="/items/new" className="button">
-          + 새 기록
-        </Link>
+        <div className="header-actions">
+          <ThemeToggle />
+          <Link to="/items/new" className="button">
+            + 새 기록
+          </Link>
+        </div>
       </header>
       <main id="main" tabIndex={-1}>
         <Outlet />
