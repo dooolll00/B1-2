@@ -8,6 +8,7 @@ import {
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import App from '../App';
 import { ToastProvider } from '../components/ToastProvider';
 import { NewRecord, EditRecord } from '../pages/Editor';
 import Items from '../pages/Items';
@@ -175,5 +176,130 @@ describe('폼과 원격 데이터 흐름', () => {
     await waitFor(() => expect(result.current.data).toBe('new'));
     await act(async () => finishOld('old'));
     expect(result.current.data).toBe('new');
+  });
+});
+
+describe('실제 앱 라우트와 추가 미션 흐름', () => {
+  function mountApp(path) {
+    vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+    return render(
+      <MemoryRouter initialEntries={[path]}>
+        <App />
+      </MemoryRouter>,
+    );
+  }
+
+  it.each([
+    ['/', '배움을 기록하고,'],
+    ['/items', '나의 학습 기록'],
+    ['/items/new', '오늘의 배움 남기기'],
+    ['/items/123', record.title],
+    ['/items/123/edit', '배움 다듬기'],
+    ['/guide', '작은 기록, 꾸준한 성장'],
+    ['/unknown', '404 · 페이지를 찾을 수 없어요'],
+  ])(
+    '%s 직접 진입 시 화면과 공통 네비게이션을 표시한다',
+    async (path, title) => {
+      mountApp(path);
+      expect(
+        await screen.findByRole('heading', { name: new RegExp(title) }),
+      ).toBeVisible();
+      expect(
+        screen.getByRole('navigation', { name: '주요 메뉴' }),
+      ).toBeVisible();
+    },
+  );
+
+  it('수정한 값을 저장하고 상세에서 다시 조회한다', async () => {
+    const updated = { ...record, title: '수정한 제목', status: '학습 완료' };
+    getRecord.mockResolvedValueOnce(record).mockResolvedValue(updated);
+    saveRecord.mockResolvedValue(updated);
+    mountApp('/items/123/edit');
+    const title = await screen.findByLabelText('제목 *');
+    expect(title).toHaveValue(record.title);
+    await userEvent.clear(title);
+    await userEvent.type(title, updated.title);
+    await userEvent.selectOptions(
+      screen.getByLabelText('학습 상태'),
+      updated.status,
+    );
+    await userEvent.click(screen.getByRole('button', { name: '수정 저장' }));
+    expect(
+      await screen.findByRole('heading', { name: updated.title, level: 1 }),
+    ).toBeVisible();
+    expect(saveRecord).toHaveBeenCalledWith(
+      expect.objectContaining({ title: updated.title, status: updated.status }),
+      record.id,
+    );
+    expect(getRecord).toHaveBeenCalledTimes(2);
+    expect(screen.getByRole('status')).toHaveTextContent('기록을 수정했어요.');
+  });
+
+  it('삭제를 취소하면 요청하지 않고 상세를 유지한다', async () => {
+    mountApp('/items/123');
+    await userEvent.click(
+      await screen.findByRole('button', { name: '삭제하기' }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: '취소' }));
+    expect(
+      screen.queryByRole('button', { name: '삭제 확인' }),
+    ).not.toBeInTheDocument();
+    expect(deleteRecord).not.toHaveBeenCalled();
+    expect(screen.getByRole('heading', { name: record.title })).toBeVisible();
+  });
+
+  it('검색·주제·상태 조건을 함께 적용한다', async () => {
+    listRecords.mockResolvedValue([
+      record,
+      {
+        ...record,
+        id: '456',
+        title: 'CSS 레이아웃',
+        category: 'CSS',
+        status: '학습 완료',
+      },
+    ]);
+    mountApp('/items');
+    await screen.findByRole('heading', { name: record.title });
+    await userEvent.selectOptions(
+      screen.getByLabelText('학습 상태'),
+      '학습 완료',
+    );
+    expect(
+      screen.queryByRole('heading', { name: record.title }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'CSS 레이아웃' })).toBeVisible();
+    await userEvent.selectOptions(screen.getByLabelText('주제'), 'React');
+    expect(screen.getByText('검색 결과가 없어요')).toBeVisible();
+    await userEvent.click(screen.getByRole('button', { name: '필터 초기화' }));
+    await userEvent.type(screen.getByLabelText('기록 검색'), '상태가 바뀌면');
+    expect(screen.getByRole('heading', { name: record.title })).toBeVisible();
+    expect(screen.getByLabelText('학습 상태')).toHaveValue('전체');
+  });
+
+  it.each(['/items/123', '/items/123/edit'])(
+    '%s 조회 실패 후 재시도할 수 있다',
+    async (path) => {
+      getRecord
+        .mockRejectedValueOnce(new Error('조회 실패'))
+        .mockResolvedValue(record);
+      mountApp(path);
+      expect(await screen.findByRole('alert')).toHaveTextContent('조회 실패');
+      await userEvent.click(screen.getByRole('button', { name: '다시 시도' }));
+      expect(
+        await screen.findByRole('heading', {
+          name: path.endsWith('/edit') ? '배움 다듬기' : record.title,
+        }),
+      ).toBeVisible();
+    },
+  );
+
+  it('없는 수정 데이터는 빈 상태로 안내한다', async () => {
+    getRecord.mockResolvedValue(null);
+    mountApp('/items/123/edit');
+    expect(await screen.findByText('기록을 찾을 수 없어요')).toBeVisible();
+    expect(
+      screen.queryByRole('button', { name: '수정 저장' }),
+    ).not.toBeInTheDocument();
   });
 });
