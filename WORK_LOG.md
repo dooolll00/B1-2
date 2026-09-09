@@ -295,3 +295,41 @@ React 기반 SPA 서비스 하나를 완성하며 컴포넌트 구조와 데이�
 - 사전 확인: 원격 fetch 성공, 로컬 HEAD와 origin/main 차이 0/0. 테스트 31개·빌드·audit 통과 결과 유지. 배포 직전 format:check와 git diff --check 통과.
 - 커밋 메시지: `fix: isolate record request state and update test dependencies`.
 - 다음 작업: GitHub main 반영, Vercel 배포 상태 및 공개 사이트에서 테스트 기록 생성·조회·수정·삭제 검증. 기존 사용자 기록은 건드리지 않고 검증 기록만 삭제한다. 실제 결과는 후속 기록에 추가한다.
+
+## 2026-09-09 14:47 KST — 최신 배포 및 실제 배포 환경 CRUD 검증 완료
+
+- 요청: 최신 수정본 배포와 실제 공개 환경 CRUD 확인.
+- 배포 URL: https://b1-2-steel.vercel.app
+- 최종 배포 커밋: `d4f1822fcff7cd35b18266615bdf16e0ad0371f6`.
+- GitHub 반영: 터미널 push는 기존 VS Code 인증 소켓 연결 실패로 실패. 연결된 GitHub 도구로 main을 fast-forward하여 반영했다. 강제 push 없음.
+- 커밋 메시지: `fix: isolate record request state and update test dependencies` (`d12de15`), `fix: preserve complete dependency lockfile during publication` (`d4f1822`). 최초 전송에서 도구 출력 길이 제한으로 package-lock.json 내용 일부가 잘린 것을 원격·로컬 diff로 발견해 즉시 복구했다. 첫 커밋의 CI는 실패했고, 최종 커밋의 CI는 성공했다.
+- 파일 동일성: 복구 후 원격 tree SHA `f918085ca6661e087593f77868111999f897e75b`가 로컬 검증본과 일치함을 확인. fetch 및 rebase로 중복 로컬 커밋을 정리했고 최종 HEAD와 origin/main 차이는 0/0. 이 결과 기록 추가 직전 작업 트리는 깨끗했다.
+- Vercel 상태: 최종 커밋 `success`, https://vercel.com/dooolll00/b1-2/EcYR6gZXX6YxqTrPNtUXanKQdBrc .
+- GitHub Actions: 최종 커밋의 React checks completed/success, https://github.com/dooolll00/B1-2/actions/runs/34316170828 .
+- 검증 도구: 임시 Node 22.14.0 및 `/tmp/b1-2-browser`에 설치한 Playwright/Chromium. 프로젝트 의존성은 이번 배포 검증을 위해 추가 변경하지 않음. 실행 명령은 `node /tmp/b1-2-browser/verify.cjs`.
+- 실제 공개 사이트 검증 14개 통과: 목록·빈 상태, 최신 조회 상태 가드가 포함된 배포 번들, 필수값 오류 시 원격 저장 차단, 등록 후 상세 이동, 상세 새로고침, 제목·상태 수정 후 새로고침 영속성, 목록 검색·초기화·상태 필터, 삭제 취소 후 기록 유지, 오프라인 조회 오류와 온라인 재시도, 삭제 후 목록 빈 상태 및 상세 부재, 잘못된 UUID 접근 시 인증 요청 0개, SPA 404, 테마 새로고침 유지와 390px 등록 폼 가로 넘침 없음, 원격 쓰기 성공 및 미처리 브라우저 오류 없음.
+- 원격 응답: 등록 POST 201, 수정 PATCH 200, 삭제 DELETE 200. 모의 API를 사용하지 않고 배포 사이트가 실제 Supabase에 요청하는 흐름을 검증했다.
+- 테스트 스크립트 첫 실행은 동일한 이름의 새 기록 링크가 2개여서 선택자 오류로 중단되었으며, 당시 원격 기록 쓰기는 없었다. 선택자를 수정한 두 번째 실행에서 전체 통과. 앱 오류는 발견되지 않았다.
+- 데이터 정리: 생성한 검증 기록 1개 삭제 완료, 기존 사용자 기록 수정·삭제 없음. 두 번의 목록 검증으로 생성된 익명 Auth 테스트 계정은 서버에 남으며 삭제하지 않았다. 잘못된 ID 검증용 별도 브라우저에서는 인증 요청이 없었다.
+- 임시 결과: `/tmp/b1-2-browser/result.json`, `/tmp/b1-2-browser/production-mobile.png`. 임시 경로는 이후 사라질 수 있으므로 핵심 결과는 이 기록에 보존한다.
+- 수정 파일: 기존 승인된 코드·테스트·의존성·누적 작업 기록 8개 파일을 GitHub에 반영. 검증 완료 후에는 `WORK_LOG.md`에만 결과 추가. README 및 다른 설명 문서는 변경하지 않음.
+- 남은 문제: 이번 검증 범위에서 배포 및 CRUD 문제 없음. 사용자 간 권한 위반 쓰기와 실제 저장 실패 상황은 이번 원격 검증에 포함하지 않았으며, 저장 실패 UI는 앞선 자동 테스트로 확인했다.
+- 다음 작업: 현재 공개 URL로 제출·시연 가능. 이번 최종 결과 기록은 로컬에 추가했으며 결과 기록만을 위한 추가 commit/push는 하지 않음.
+
+## 2026-09-09 14:50 KST — README 검증·배포 현황 최신화
+
+- 요청: README에도 수정할 사항이 없는지 확인.
+- 확인: 테스트 23개, 9월 7일 최종 검증, 코드·디자인 미배포 안내가 최신 상태와 불일치했다. 앞선 사용자의 제한은 미션 내용을 README 등 다른 파일에 추가하지 말라는 것으로, 일반 운영·검증 현황 갱신과 구분한다.
+- 수정 파일: `README.md`, `WORK_LOG.md`.
+- 작업: 테스트 31개, 9월 9일 실제 CRUD 검증, 최신 배포 커밋과 CI 성공, Vitest 업데이트 및 audit 결과, 디자인 배포 상태 반영. 이번에 재검증하지 않은 사용자 분리·소스 URL·키 패턴 검사는 9월 7일 결과임을 명시. 미션 요구사항 내용은 추가·변경하지 않음.
+- 검증: README Prettier 정렬 및 `git diff --check` 수행. 코드 변경이 없어 앱 테스트·빌드는 반복하지 않음.
+- 남은 사항/다음 작업: 문서 최신화와 직전 배포 결과 기록은 로컬에만 반영. 이번 작업에서 추가 commit/push·배포는 하지 않음. 앱 배포 및 CRUD 검증은 앞선 완료 상태 유지.
+
+## 2026-09-09 — README 및 배포 검증 기록 GitHub 반영
+
+- 요청: 최신 문서 변경을 push.
+- 변경 파일: `README.md`, `WORK_LOG.md`. 미션 내용 추가 없이 README의 검증·배포 현황과 누적 작업 기록을 반영한다.
+- 검증: fetch 성공, 로컬·원격 차이 0/0, git diff --check 통과. 문서 변경만 있으므로 앱 테스트·빌드는 반복하지 않음.
+- 반영 방법: 이번 세션에서 확인한 터미널 인증 소켓 오류를 피하기 위해 연결된 GitHub 도구로 동일한 파일 트리를 생성하고 main을 fast-forward한다. 강제 push 없음.
+- 커밋 메시지: `docs: update deployment verification and work log`.
+- push 상태/다음 작업: 아래 후속 결과에 실제 반영 및 동기화 결과를 기록한다.
