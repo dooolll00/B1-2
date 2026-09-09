@@ -13,6 +13,9 @@ import {
 } from '../components/UI';
 export default function Detail() {
   const { id } = useParams();
+  return <RecordDetail key={id} id={id} />;
+}
+function RecordDetail({ id }) {
   const { data, loading, error, retry } = useRecord(id);
   const [confirm, setConfirm] = useState(false);
   const [pending, setPending] = useState(false);
@@ -83,7 +86,10 @@ export default function Detail() {
               <Button
                 variant="secondary"
                 disabled={pending}
-                onClick={() => setConfirm(false)}
+                onClick={() => {
+                  setConfirm(false);
+                  setFailure(null);
+                }}
               >
                 취소
               </Button>

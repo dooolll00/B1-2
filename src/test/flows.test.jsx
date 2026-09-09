@@ -7,7 +7,7 @@ import {
   renderHook,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import { MemoryRouter, Routes, Route, Link } from 'react-router-dom';
 import App from '../App';
 import { ToastProvider } from '../components/ToastProvider';
 import { NewRecord, EditRecord } from '../pages/Editor';
@@ -176,6 +176,77 @@ describe('폼과 원격 데이터 흐름', () => {
     await waitFor(() => expect(result.current.data).toBe('new'));
     await act(async () => finishOld('old'));
     expect(result.current.data).toBe('new');
+  });
+
+  it('조회 대상이 바뀐 첫 렌더부터 이전 데이터를 숨긴다', async () => {
+    const oldLoader = () => Promise.resolve('old');
+    const newLoader = () => new Promise(() => {});
+    const renders = [];
+    const { result, rerender } = renderHook(
+      ({ loader }) => {
+        const state = useRemote(loader);
+        renders.push({ loader, ...state });
+        return state;
+      },
+      { initialProps: { loader: oldLoader } },
+    );
+    await waitFor(() => expect(result.current.data).toBe('old'));
+    rerender({ loader: newLoader });
+    const firstNewRender = renders.find((entry) => entry.loader === newLoader);
+    expect(firstNewRender).toMatchObject({
+      data: null,
+      loading: true,
+      error: null,
+    });
+  });
+
+  it('다른 기록으로 이동하면 삭제 확인과 오류를 초기화한다', async () => {
+    getRecord.mockImplementation(async (id) => ({
+      ...record,
+      id,
+      title: `기록 ${id}`,
+    }));
+    deleteRecord.mockRejectedValue(new Error('삭제 실패'));
+    render(
+      <MemoryRouter initialEntries={['/items/123']}>
+        <ToastProvider>
+          <Link to="/items/456">다른 기록</Link>
+          <Routes>
+            <Route path="/items/:id" element={<Detail />} />
+          </Routes>
+        </ToastProvider>
+      </MemoryRouter>,
+    );
+    await userEvent.click(
+      await screen.findByRole('button', { name: '삭제하기' }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: '삭제 확인' }));
+    await screen.findByRole('alert');
+    await userEvent.click(screen.getByRole('link', { name: '다른 기록' }));
+    await screen.findByRole('heading', { name: '기록 456' });
+    expect(
+      screen.queryByRole('button', { name: '삭제 확인' }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('삭제 실패 후 취소하면 오류를 지우고 다시 시도할 수 있다', async () => {
+    deleteRecord
+      .mockRejectedValueOnce(new Error('삭제 실패'))
+      .mockResolvedValueOnce({ id: '123' });
+    mount(null, '/items/123');
+    await userEvent.click(
+      await screen.findByRole('button', { name: '삭제하기' }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: '삭제 확인' }));
+    await screen.findByRole('alert');
+    await userEvent.click(screen.getByRole('button', { name: '취소' }));
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: '삭제하기' }));
+    await userEvent.click(screen.getByRole('button', { name: '삭제 확인' }));
+    expect(
+      await screen.findByRole('heading', { name: '나의 학습 기록' }),
+    ).toBeVisible();
   });
 });
 

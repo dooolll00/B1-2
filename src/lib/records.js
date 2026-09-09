@@ -25,11 +25,11 @@ export async function listRecords() {
   return data;
 }
 export async function getRecord(id) {
-  await ensureSession();
   if (
     !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
   )
     return null;
+  await ensureSession();
   const { data, error } = await supabase
     .from('records')
     .select('*')
